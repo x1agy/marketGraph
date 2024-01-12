@@ -1,0 +1,15 @@
+{
+  
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "chart.js": "^3.9.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-node-canvas": "^4.1.6",
+    "date-fns": "^3.2.0",
+    "fs": "^0.0.1-security"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
