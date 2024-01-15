@@ -1,8 +1,9 @@
 import { ChartJSNodeCanvas, ChartCallback } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
 import { writeFileSync } from 'fs';
+import { toRadians } from 'chart.js/helpers';
 
-async function createChart(chartData, watermark) {
+async function createChart(chartData, watermarkText) {
 	const response = await fetch('https://api.binance.com/api/v3/klines?symbol=SUIBTC&interval=1h&limit=20')
 	const responseData = await response.json();
 	let maxDate = -Infinity;
@@ -47,7 +48,7 @@ async function createChart(chartData, watermark) {
 			ctx.fillStyle = 'black';
 			ctx.fillRect(0, 0, width + 300, height + 300);
 			ctx.restore();
-			ctx.lineWidth = 6;
+			ctx.lineWidth = 1;
 			ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
 			// незакрашенные линии
 			data.datasets[0].data.forEach((dataPoint, index) => {
@@ -70,6 +71,24 @@ async function createChart(chartData, watermark) {
 			});
 		}
 	}
+
+	const watermark = {
+		id: 'watermark',
+		afterDraw(chart, args, plugins) {
+		  const { ctx, chartArea: { top, bottom, left, right, width, height } } = chart;
+	  
+		  ctx.save();
+		  ctx.font = 'bold 50px sans-serif';
+		  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+		  ctx.textAlign = 'center';
+		  const centerX = width / 2 + left;
+		  const centerY = height / 2 + top;
+		  ctx.translate(centerX, centerY);
+		  ctx.rotate(toRadians(-45));
+		  ctx.fillText(watermarkText, 0, 0);
+		  ctx.restore();
+		},
+	  };
 
 	const width = 1400;
 	const height = 700;
@@ -132,11 +151,10 @@ async function createChart(chartData, watermark) {
 					},
 					suggestedMax: maxValue,
 					suggestedMin: minValue,
-					
 				},
 			},
 		},
-		plugins: [candleStick]
+		plugins: [candleStick, watermark]
 	};
 	const chartCallback: ChartCallback = (ChartJS) => {
 		ChartJS.defaults.responsive = true;

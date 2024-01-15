@@ -38,9 +38,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var chartjs_node_canvas_1 = require("chartjs-node-canvas");
 var fs_1 = require("fs");
-function createChart(chartData, watermark) {
+var helpers_1 = require("chart.js/helpers");
+function createChart(chartData, watermarkText) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, responseData, maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer;
+        var response, responseData, maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, watermark, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetch('https://api.binance.com/api/v3/klines?symbol=SUIBTC&interval=1h&limit=20')];
@@ -84,10 +85,10 @@ function createChart(chartData, watermark) {
                         beforeDraw: function (chart) {
                             var ctx = chart.ctx, data = chart.data, _a = chart.chartArea, top = _a.top, bottom = _a.bottom, left = _a.left, right = _a.right, width = _a.width, height = _a.height, _b = chart.scales, x = _b.x, y = _b.y;
                             ctx.save();
-                            ctx.fillStyle = 'white';
+                            ctx.fillStyle = 'black';
                             ctx.fillRect(0, 0, width + 300, height + 300);
                             ctx.restore();
-                            ctx.lineWidth = 6;
+                            ctx.lineWidth = 1;
                             ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
                             // незакрашенные линии
                             data.datasets[0].data.forEach(function (dataPoint, index) {
@@ -107,6 +108,22 @@ function createChart(chartData, watermark) {
                                 ctx.stroke();
                             });
                         }
+                    };
+                    watermark = {
+                        id: 'watermark',
+                        afterDraw: function (chart, args, plugins) {
+                            var ctx = chart.ctx, _a = chart.chartArea, top = _a.top, bottom = _a.bottom, left = _a.left, right = _a.right, width = _a.width, height = _a.height;
+                            ctx.save();
+                            ctx.font = 'bold 50px sans-serif';
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                            ctx.textAlign = 'center';
+                            var centerX = width / 2 + left;
+                            var centerY = height / 2 + top;
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate((0, helpers_1.toRadians)(-45));
+                            ctx.fillText(watermarkText, 0, 0);
+                            ctx.restore();
+                        },
                     };
                     width = 1400;
                     height = 700;
@@ -172,19 +189,15 @@ function createChart(chartData, watermark) {
                                     suggestedMin: minValue,
                                 },
                             },
-                            watermark: {
-                                text: 'asdasdasd',
-                                color: 'pink'
-                            },
                         },
-                        plugins: [candleStick]
+                        plugins: [candleStick, watermark]
                     };
                     chartCallback = function (ChartJS) {
                         ChartJS.defaults.responsive = true;
                         ChartJS.defaults.maintainAspectRatio = false;
                     };
                     chartJSNodeCanvas = new chartjs_node_canvas_1.ChartJSNodeCanvas({ width: width, height: height, plugins: {
-                            modern: [require('chartjs-adapter-date-fns'), require('chartjs-plugin-watermark')]
+                            modern: [require('chartjs-adapter-date-fns')]
                         }, chartCallback: chartCallback });
                     return [4 /*yield*/, chartJSNodeCanvas.renderToBuffer(configuration)];
                 case 3:
