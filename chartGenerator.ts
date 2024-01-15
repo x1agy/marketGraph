@@ -2,7 +2,7 @@ import { ChartJSNodeCanvas, ChartCallback } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
 import { writeFileSync } from 'fs';
 
-async function main(): Promise<void> {
+async function createChart(chartData, watermark) {
 	const response = await fetch('https://api.binance.com/api/v3/klines?symbol=SUIBTC&interval=1h&limit=20')
 	const responseData = await response.json();
 	let maxDate = -Infinity;
@@ -12,7 +12,7 @@ async function main(): Promise<void> {
 
 	const data = [];
 
-	for(let i of responseData){
+	for(let i of chartData){
 		// переменные для отступов от границ 
 		if(i[0] > maxDate){
 			maxDate = i[0];
@@ -134,8 +134,6 @@ async function main(): Promise<void> {
 					suggestedMin: minValue,
 					
 				},
-				
-				
 			},
 		},
 		plugins: [candleStick]
@@ -148,6 +146,8 @@ async function main(): Promise<void> {
 		modern: [require('chartjs-adapter-date-fns')]
 	}, chartCallback });
 	const buffer = await chartJSNodeCanvas.renderToBuffer(configuration);
-	writeFileSync('./canvas.png', buffer, 'base64');
+	writeFileSync('./public/canvas.png', buffer, 'base64');
+	return('canvas.png')
 }
-main();
+
+export default createChart;

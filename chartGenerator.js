@@ -38,9 +38,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var chartjs_node_canvas_1 = require("chartjs-node-canvas");
 var fs_1 = require("fs");
-function main() {
+function createChart(chartData, watermark) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, responseData, maxDate, minDate, maxValue, minValue, data, _i, responseData_1, i, candleStick, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer;
+        var response, responseData, maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetch('https://api.binance.com/api/v3/klines?symbol=SUIBTC&interval=1h&limit=20')];
@@ -54,8 +54,9 @@ function main() {
                     maxValue = -Infinity;
                     minValue = +Infinity;
                     data = [];
-                    for (_i = 0, responseData_1 = responseData; _i < responseData_1.length; _i++) {
-                        i = responseData_1[_i];
+                    for (_i = 0, chartData_1 = chartData; _i < chartData_1.length; _i++) {
+                        i = chartData_1[_i];
+                        // переменные для отступов от границ 
                         if (i[0] > maxDate) {
                             maxDate = i[0];
                         }
@@ -83,11 +84,12 @@ function main() {
                         beforeDraw: function (chart) {
                             var ctx = chart.ctx, data = chart.data, _a = chart.chartArea, top = _a.top, bottom = _a.bottom, left = _a.left, right = _a.right, width = _a.width, height = _a.height, _b = chart.scales, x = _b.x, y = _b.y;
                             ctx.save();
-                            ctx.fillStyle = 'black';
+                            ctx.fillStyle = 'white';
                             ctx.fillRect(0, 0, width + 300, height + 300);
                             ctx.restore();
                             ctx.lineWidth = 6;
                             ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                            // незакрашенные линии
                             data.datasets[0].data.forEach(function (dataPoint, index) {
                                 //@ts-ignore
                                 var color = dataPoint.o <= dataPoint.c ? 'rgba(11, 156, 49, 1)' : 'rgba(255, 0, 0, 1)';
@@ -170,6 +172,10 @@ function main() {
                                     suggestedMin: minValue,
                                 },
                             },
+                            watermark: {
+                                text: 'asdasdasd',
+                                color: 'pink'
+                            },
                         },
                         plugins: [candleStick]
                     };
@@ -178,15 +184,15 @@ function main() {
                         ChartJS.defaults.maintainAspectRatio = false;
                     };
                     chartJSNodeCanvas = new chartjs_node_canvas_1.ChartJSNodeCanvas({ width: width, height: height, plugins: {
-                            modern: [require('chartjs-adapter-date-fns')]
+                            modern: [require('chartjs-adapter-date-fns'), require('chartjs-plugin-watermark')]
                         }, chartCallback: chartCallback });
                     return [4 /*yield*/, chartJSNodeCanvas.renderToBuffer(configuration)];
                 case 3:
                     buffer = _a.sent();
-                    (0, fs_1.writeFileSync)('./canvas.png', buffer, 'base64');
-                    return [2 /*return*/];
+                    (0, fs_1.writeFileSync)('./public/canvas.png', buffer, 'base64');
+                    return [2 /*return*/, ('canvas.png')];
             }
         });
     });
 }
-main();
+exports.default = createChart;
