@@ -146,13 +146,18 @@ async function createChart(chartData, watermarkText) {
 						padding: 20,
 						callback: function(value, index, values) {
 							// Форматирование чисел без научной нотации
-							return value.toLocaleString('en-US', { maximumFractionDigits: 20 });
+							return value.toLocaleString('en-US', { maximumFractionDigits: 9 });
 						}
 					},
 					suggestedMax: maxValue,
 					suggestedMin: minValue,
 				},
 			},
+			plugins: {
+				legend: {
+					display: false
+				},
+			}
 		},
 		plugins: [candleStick, watermark]
 	};
