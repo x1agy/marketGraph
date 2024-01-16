@@ -2,6 +2,7 @@ import { ChartJSNodeCanvas, ChartCallback } from 'chartjs-node-canvas'
 import { ChartConfiguration } from 'chart.js'
 import { writeFileSync } from 'fs'
 import { toRadians } from 'chart.js/helpers'
+import * as crypto from 'crypto'
 
 async function createChart(chartData, watermarkText) {
   let maxDate = -Infinity
@@ -196,8 +197,9 @@ async function createChart(chartData, watermarkText) {
     chartCallback,
   })
   const buffer = await chartJSNodeCanvas.renderToBuffer(configuration)
-  writeFileSync('./public/canvas.png', buffer, 'base64')
-  return 'canvas.png'
+  const name = `${crypto.randomUUID()}.png`
+  writeFileSync(`./public/${name}`, buffer, 'base64')
+  return name
 }
 
 export default createChart

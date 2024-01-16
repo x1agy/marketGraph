@@ -39,17 +39,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var chartjs_node_canvas_1 = require("chartjs-node-canvas");
 var fs_1 = require("fs");
 var helpers_1 = require("chart.js/helpers");
+var crypto = require("crypto");
 function createChart(chartData, watermarkText) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, responseData, maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, watermark, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer;
+        var maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, watermark, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer, name;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetch('https://api.binance.com/api/v3/klines?symbol=SUIBTC&interval=1h&limit=20')];
-                case 1:
-                    response = _a.sent();
-                    return [4 /*yield*/, response.json()];
-                case 2:
-                    responseData = _a.sent();
+                case 0:
                     maxDate = -Infinity;
                     minDate = +Infinity;
                     maxValue = -Infinity;
@@ -213,10 +209,11 @@ function createChart(chartData, watermarkText) {
                         chartCallback: chartCallback,
                     });
                     return [4 /*yield*/, chartJSNodeCanvas.renderToBuffer(configuration)];
-                case 3:
+                case 1:
                     buffer = _a.sent();
-                    (0, fs_1.writeFileSync)('./public/canvas.png', buffer, 'base64');
-                    return [2 /*return*/, 'canvas.png'];
+                    name = "".concat(crypto.randomUUID(), ".png");
+                    (0, fs_1.writeFileSync)("./public/".concat(name), buffer, 'base64');
+                    return [2 /*return*/, name];
             }
         });
     });
