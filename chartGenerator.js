@@ -57,7 +57,7 @@ function createChart(chartData, watermarkText) {
                     data = [];
                     for (_i = 0, chartData_1 = chartData; _i < chartData_1.length; _i++) {
                         i = chartData_1[_i];
-                        // переменные для отступов от границ 
+                        // переменные для отступов от границ
                         if (i[0] > maxDate) {
                             maxDate = i[0];
                         }
@@ -77,7 +77,7 @@ function createChart(chartData, watermarkText) {
                             h: i[2],
                             l: i[3],
                             c: i[4],
-                            s: [i[1], i[4]]
+                            s: [i[1], i[4]],
                         });
                     }
                     candleStick = {
@@ -93,7 +93,9 @@ function createChart(chartData, watermarkText) {
                             // незакрашенные линии
                             data.datasets[0].data.forEach(function (dataPoint, index) {
                                 //@ts-ignore
-                                var color = dataPoint.o <= dataPoint.c ? 'rgba(11, 156, 49, 1)' : 'rgba(255, 0, 0, 1)';
+                                var color = dataPoint.o <= dataPoint.c
+                                    ? 'rgba(11, 156, 49, 1)'
+                                    : 'rgba(255, 0, 0, 1)';
                                 ctx.beginPath();
                                 ctx.moveTo(chart.getDatasetMeta(0).data[index].x, chart.getDatasetMeta(0).data[index].y);
                                 //@ts-ignore
@@ -107,7 +109,7 @@ function createChart(chartData, watermarkText) {
                                 ctx.strokeStyle = color;
                                 ctx.stroke();
                             });
-                        }
+                        },
                     };
                     watermark = {
                         id: 'watermark',
@@ -120,7 +122,7 @@ function createChart(chartData, watermarkText) {
                             var centerX = width / 2 + left;
                             var centerY = height / 2 + top;
                             ctx.translate(centerX, centerY);
-                            ctx.rotate((0, helpers_1.toRadians)(-45));
+                            ctx.rotate((0, helpers_1.toRadians)(-15));
                             ctx.fillText(watermarkText, 0, 0);
                             ctx.restore();
                         },
@@ -130,7 +132,8 @@ function createChart(chartData, watermarkText) {
                     configuration = {
                         type: 'bar',
                         data: {
-                            datasets: [{
+                            datasets: [
+                                {
                                     data: data,
                                     backgroundColor: function (ctx) {
                                         var color;
@@ -140,13 +143,13 @@ function createChart(chartData, watermarkText) {
                                         else {
                                             color = 'rgba(255, 0, 0, 1)';
                                         }
-                                        ;
                                         return color;
                                     },
                                     borderColor: 'rgba(0, 0, 0, 1)',
                                     borderWidth: 1,
-                                    borderSkipped: false
-                                }]
+                                    borderSkipped: false,
+                                },
+                            ],
                         },
                         options: {
                             responsive: true,
@@ -163,7 +166,7 @@ function createChart(chartData, watermarkText) {
                                             size: 16,
                                             weight: '800',
                                         },
-                                        backdropPadding: 20
+                                        backdropPadding: 20,
                                     },
                                     //@ts-ignore
                                     min: new Date(minDate - 3000000),
@@ -183,7 +186,7 @@ function createChart(chartData, watermarkText) {
                                         callback: function (value, index, values) {
                                             // Форматирование чисел без научной нотации
                                             return value.toLocaleString('en-US', { maximumFractionDigits: 9 });
-                                        }
+                                        },
                                     },
                                     suggestedMax: maxValue,
                                     suggestedMin: minValue,
@@ -191,24 +194,29 @@ function createChart(chartData, watermarkText) {
                             },
                             plugins: {
                                 legend: {
-                                    display: false
+                                    display: false,
                                 },
-                            }
+                            },
                         },
-                        plugins: [candleStick, watermark]
+                        plugins: [candleStick, watermark],
                     };
                     chartCallback = function (ChartJS) {
                         ChartJS.defaults.responsive = true;
                         ChartJS.defaults.maintainAspectRatio = false;
                     };
-                    chartJSNodeCanvas = new chartjs_node_canvas_1.ChartJSNodeCanvas({ width: width, height: height, plugins: {
-                            modern: [require('chartjs-adapter-date-fns')]
-                        }, chartCallback: chartCallback });
+                    chartJSNodeCanvas = new chartjs_node_canvas_1.ChartJSNodeCanvas({
+                        width: width,
+                        height: height,
+                        plugins: {
+                            modern: [require('chartjs-adapter-date-fns')],
+                        },
+                        chartCallback: chartCallback,
+                    });
                     return [4 /*yield*/, chartJSNodeCanvas.renderToBuffer(configuration)];
                 case 3:
                     buffer = _a.sent();
                     (0, fs_1.writeFileSync)('./public/canvas.png', buffer, 'base64');
-                    return [2 /*return*/, ('canvas.png')];
+                    return [2 /*return*/, 'canvas.png'];
             }
         });
     });
