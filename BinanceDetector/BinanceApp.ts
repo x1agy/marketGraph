@@ -22,7 +22,7 @@ async function checkMarket(symbols: SymbolType[]){
 }
 
 async function getCandleStickData(coinName){
-    const candleStickDataURL = `https://api.binance.com/api/v3/klines?symbol=${coinName}&interval=15m&limit=60`
+    const candleStickDataURL = `https://api.binance.com/api/v3/klines?symbol=${coinName}&interval=15m&limit=96`
     const response = await fetch(candleStickDataURL);
     const data = await response.json();
     return data
