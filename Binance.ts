@@ -24,9 +24,10 @@ async function fetchCoinToBTCSymbolData(){
     try {
         const response = await fetch(urlForSymbols)
         const data = await response.json()
-        const btcPairs = data.symbols.filter(symbol => /[A-Z]+BTC/.test(symbol.symbol));
+        const btcPairs = data.symbols.filter(symbol => /[A-Z]+BTC/.test(symbol.symbol) && symbol.status === 'TRADING');
         const btcSymbols = btcPairs.map(pair => pair.symbol);
         coinsSymbols = btcSymbols;
+        console.log(btcPairs.length, ' pairs traiding!')
         console.log('symbol names fetching complete!')
         console.log('started fetching data')
         fetchBTCCurrencyHistory(coinsSymbols)

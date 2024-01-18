@@ -58,9 +58,10 @@ function fetchCoinToBTCSymbolData() {
                     return [4 /*yield*/, response.json()];
                 case 4:
                     data = _a.sent();
-                    btcPairs = data.symbols.filter(function (symbol) { return /[A-Z]+BTC/.test(symbol.symbol); });
+                    btcPairs = data.symbols.filter(function (symbol) { return /[A-Z]+BTC/.test(symbol.symbol) && symbol.status === 'TRADING'; });
                     btcSymbols = btcPairs.map(function (pair) { return pair.symbol; });
                     coinsSymbols = btcSymbols;
+                    console.log(btcPairs.length, ' pairs traiding!');
                     console.log('symbol names fetching complete!');
                     console.log('started fetching data');
                     fetchBTCCurrencyHistory(coinsSymbols);
