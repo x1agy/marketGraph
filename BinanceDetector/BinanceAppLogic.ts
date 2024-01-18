@@ -10,6 +10,9 @@ async function main(){
     setInterval(async () => {
         const newMarketData = await checkMarket(symbols);
         addNewDataToMarketData(newMarketData);
+
+        clearExpiredPrices()
+        checkCoinsCurrencyChange();
         console.log(MarketData[0])
     }, 30000)
 }
@@ -22,27 +25,6 @@ function addNewDataToMarketData(newData){
                 price: coinData.price,
                 time: new Date().getTime(),
             })
-
-            const lastElementIndexInPrices = MarketData[coinIndex].prices.length - 1;
-            const hourAgoPrice = MarketData[coinIndex].prices[ lastElementIndexInPrices ].price;
-            const coinName = MarketData[coinIndex].symbol;
-
-            // check expired date
-            if(MarketData[coinIndex].prices[ lastElementIndexInPrices ].time - MarketData[coinIndex].prices[0].time > 3600){
-                MarketData[coinIndex].prices.shift()
-            }
-
-            // check рост монеты 
-            if((((hourAgoPrice - MarketData[coinIndex].prices[0].price) / hourAgoPrice) * 100 > 5)){
-                // check is coin have chart
-                if(coinsThatHaveChart.findIndex((item) => item.coinName === MarketData[coinIndex].symbol) !== -1){
-                    const symbolDataForChart = getCandleStickData(coinName);
-                    requestToCreateChart(symbolDataForChart, coinName)
-                }
-            }else{
-                console.log('условие не пройдено ', lastElementIndexInPrices, '  ', hourAgoPrice, '  ', MarketData[coinIndex].symbol)
-            }
-
         }else{
             MarketData.push({
                 symbol: coinData.symbol,
@@ -73,6 +55,25 @@ async function requestToCreateChart(candleStickData, coinName){
             coinName: coinName,
             chartId: imageId
         }))
+}
+
+function checkCoinsCurrencyChange(){
+    MarketData.map(async (coin) => {
+        const hourAgoPrice = coin.prices[0].price;
+        const modernPrice = coin.prices[coin.prices.length - 1].price
+        if(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5){
+            const candleStickData = await getCandleStickData(coin.symbol)
+            requestToCreateChart(candleStickData, coin.symbol)
+        }
+    })
+}
+
+function clearExpiredPrices(){
+    for(let i = 0; i < MarketData.length; i++){
+        if(MarketData[i].prices[MarketData[i].prices.length - 1].time - MarketData[i].prices[0].time > 3600){
+            MarketData[i].prices.shift()
+        }
+    }
 }
 
 main()
