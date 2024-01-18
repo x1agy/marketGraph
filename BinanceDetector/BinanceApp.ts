@@ -1,4 +1,4 @@
-import { SymbolType } from "./BinanceDetectorTypes";
+import { SymbolType } from "../Types/BinanceDetectorTypes";
 
 async function getSymbols(){
     const response = await fetch('https://api.binance.com/api/v3/exchangeInfo')
@@ -21,5 +21,12 @@ async function checkMarket(symbols: SymbolType[]){
     return filteredData;
 }
 
-export { getSymbols, checkMarket };
+async function getCandleStickData(coinName){
+    const candleStickDataURL = `https://api.binance.com/api/v3/klines?symbol=${coinName}&interval=15m&limit=60`
+    const response = await fetch(candleStickDataURL);
+    const data = await response.json();
+    return data
+}
+
+export { getSymbols, checkMarket, getCandleStickData };
 

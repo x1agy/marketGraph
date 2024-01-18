@@ -1,6 +1,4 @@
-export type SymbolType = {
-    symbol: string;
-}
+export type SymbolType = string
 
 export type SymbolDataType = {
     symbol: SymbolType,
