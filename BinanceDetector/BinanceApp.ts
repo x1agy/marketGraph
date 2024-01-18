@@ -1,14 +1,4 @@
-type SymbolType = {
-    symbol: string;
-}
-
-type SymbolDataType = {
-    symbol: SymbolType,
-    prices: [{
-        price: number,
-        time: number
-    }]
-}
+import { SymbolType } from "./BinanceDetectorTypes";
 
 async function getSymbols(){
     const response = await fetch('https://api.binance.com/api/v3/exchangeInfo')
@@ -18,7 +8,7 @@ async function getSymbols(){
     return btcSymbols
 }
 
-async function checkMarket(marketData: SymbolDataType[], symbols: SymbolType[]){
+async function checkMarket(symbols: SymbolType[]){
     const response = await fetch('https://api.binance.com/api/v3/ticker/price');
     const data = await response.json();
     // filters data by filtered symbols from props
@@ -27,27 +17,9 @@ async function checkMarket(marketData: SymbolDataType[], symbols: SymbolType[]){
             return true
         }else return false
     })
-    // filters data by is marketData have needed prop ? add prop to prices for symbol in marketData : add new prop for marketData
-    for(let i = 0; i < filteredData.length; i++){
-        if(marketData.includes(filteredData[i].symbol)){
-            const symbolIndex = marketData.findIndex(filteredData[i].symbol)
-            marketData[symbolIndex].prices.push({
-                price: filteredData.price,
-                time: new Date().getTime()
-            })
-        }else{
-            marketData.push({
-                symbol: filteredData[i].symbol,
-                prices: [{
-                    price: filteredData[i].price,
-                    time: new Date().getTime()
-                }]
-            })
-        }
-    }
     
-    return marketData;
+    return filteredData;
 }
 
-export { getSymbols, SymbolDataType, SymbolType, checkMarket };
+export { getSymbols, checkMarket };
 

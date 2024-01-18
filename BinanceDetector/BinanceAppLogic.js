@@ -37,28 +37,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var BinanceApp_1 = require("./BinanceApp");
+var MarketData = [];
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var symbols, MarketData, count;
+        var symbols;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, BinanceApp_1.getSymbols)()];
                 case 1:
                     symbols = _a.sent();
-                    MarketData = [];
-                    return [4 /*yield*/, (0, BinanceApp_1.checkMarket)(MarketData, symbols)];
-                case 2:
-                    MarketData = _a.sent();
-                    count = 0;
                     setInterval(function () { return __awaiter(_this, void 0, void 0, function () {
+                        var newMarketData;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, (0, BinanceApp_1.checkMarket)(MarketData, symbols)];
+                                case 0: return [4 /*yield*/, (0, BinanceApp_1.checkMarket)(symbols)];
                                 case 1:
-                                    MarketData = _a.sent();
-                                    console.log(MarketData);
-                                    count++;
+                                    newMarketData = _a.sent();
+                                    addNewDataToMarketData(newMarketData);
+                                    console.log(MarketData[0]);
                                     return [2 /*return*/];
                             }
                         });
@@ -66,6 +63,26 @@ function main() {
                     return [2 /*return*/];
             }
         });
+    });
+}
+function addNewDataToMarketData(newData) {
+    newData.map(function (coinData) {
+        var coinIndex = MarketData.findIndex(function (item) { return item.symbol === coinData.symbol; });
+        if (coinIndex !== -1) {
+            MarketData[coinIndex].prices.push({
+                price: coinData.price,
+                time: new Date().getTime(),
+            });
+        }
+        else {
+            MarketData.push({
+                symbol: coinData.symbol,
+                prices: [{
+                        price: coinData.price,
+                        time: new Date().getTime(),
+                    }]
+            });
+        }
     });
 }
 main();

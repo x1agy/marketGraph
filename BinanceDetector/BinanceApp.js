@@ -58,9 +58,9 @@ function getSymbols() {
     });
 }
 exports.getSymbols = getSymbols;
-function checkMarket(marketData, symbols) {
+function checkMarket(symbols) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, data, filteredData, i, symbolIndex;
+        var response, data, filteredData;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetch('https://api.binance.com/api/v3/ticker/price')];
@@ -69,7 +69,6 @@ function checkMarket(marketData, symbols) {
                     return [4 /*yield*/, response.json()];
                 case 2:
                     data = _a.sent();
-                    console.log('symbols in check ----', symbols);
                     return [4 /*yield*/, data.filter(function (item) {
                             if (symbols.includes(item.symbol)) {
                                 return true;
@@ -79,26 +78,7 @@ function checkMarket(marketData, symbols) {
                         })];
                 case 3:
                     filteredData = _a.sent();
-                    for (i = 0; i < filteredData.length; i++) {
-                        if (marketData.includes(filteredData[i].symbol)) {
-                            symbolIndex = marketData.findIndex(filteredData[i].symbol);
-                            marketData[symbolIndex].prices.push({
-                                price: filteredData.price,
-                                time: new Date().getTime()
-                            });
-                        }
-                        else {
-                            marketData.push({
-                                symbol: filteredData[i].symbol,
-                                prices: [{
-                                        price: filteredData[i].price,
-                                        time: new Date().getTime()
-                                    }]
-                            });
-                        }
-                    }
-                    console.log(filteredData, '--filtered data        ', marketData, '----market DATAAA       ');
-                    return [2 /*return*/, marketData];
+                    return [2 /*return*/, filteredData];
             }
         });
     });
