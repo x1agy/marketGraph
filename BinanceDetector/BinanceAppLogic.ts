@@ -3,7 +3,8 @@ import { SymbolType, SymbolDataType } from "../Types/BinanceDetectorTypes";
 
 
 const MarketData: SymbolDataType[] = [];
-const coinsThatHaveChart: {coinName: string, chartId: string}[] = [];
+const coinsThatHaveChart: {coinName: string, chartId: string, createdTime: number}[] = [];
+const intervalTime = 30000;
 
 async function main(){
     const symbols: SymbolType[] = await getSymbols()
@@ -11,10 +12,10 @@ async function main(){
         const newMarketData = await checkMarket(symbols);
         addNewDataToMarketData(newMarketData);
 
-        clearExpiredPrices()
+        clearExpiredPrices();
+        clearExpiredCharts();
         checkCoinsCurrencyChange();
-        console.log(MarketData[0])
-    }, 30000)
+    }, intervalTime)
 }
 
 function addNewDataToMarketData(newData){
@@ -53,26 +54,54 @@ async function requestToCreateChart(candleStickData, coinName){
         .then(response => response.json())
         .then(imageId => coinsThatHaveChart.push({
             coinName: coinName,
-            chartId: imageId
+            chartId: imageId,
+            createdTime: new Date().getDate(),
         }))
+        .catch(e => console.error('chart create error', e))
 }
 
 function checkCoinsCurrencyChange(){
     MarketData.map(async (coin) => {
-        const hourAgoPrice = coin.prices[0].price;
-        const modernPrice = coin.prices[coin.prices.length - 1].price
-        if(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5){
-            const candleStickData = await getCandleStickData(coin.symbol)
-            requestToCreateChart(candleStickData, coin.symbol)
+        //проверка есть ли уже цены часовой давности
+        if(coin.prices.length === 3600 / intervalTime){
+            // проверка есть ли уже график у монеты
+            if(coinsThatHaveChart.findIndex(chart => chart.coinName === coin.symbol) === -1){
+                const hourAgoPrice = coin.prices[0].price;
+                const modernPrice = coin.prices[coin.prices.length - 1].price
+                if(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5){
+                    const candleStickData = await getCandleStickData(coin.symbol)
+                    requestToCreateChart(candleStickData, coin.symbol)
+                }
+            }
         }
     })
 }
 
 function clearExpiredPrices(){
-    for(let i = 0; i < MarketData.length; i++){
-        if(MarketData[i].prices[MarketData[i].prices.length - 1].time - MarketData[i].prices[0].time > 3600){
-            MarketData[i].prices.shift()
+    MarketData.map(coin => {
+        if(coin.prices.length > 3600 / intervalTime){
+            coin.prices.shift();
         }
+    })
+}
+
+function clearExpiredCharts(){
+    let expiredChartIndex;
+    const chartDeleteUrl = 'http://localhost:5000/deleteChart';
+    coinsThatHaveChart.map((chart, index) => {
+        if(new Date().getDate() - chart.createdTime > 86400){
+            expiredChartIndex = index
+            fetch(chartDeleteUrl, {
+                method: "DELETE",
+                body: JSON.stringify({
+                    chartName: chart.chartId,
+                })
+            })
+                .catch(e => console.error('chart delete error ', e))
+        }
+    })
+    if(expiredChartIndex !== undefined){
+        coinsThatHaveChart.splice(expiredChartIndex, 1)
     }
 }
 

@@ -38,6 +38,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var BinanceApp_1 = require("./BinanceApp");
 var MarketData = [];
+var coinsThatHaveChart = [];
+var intervalTime = 30000;
 function main() {
     return __awaiter(this, void 0, void 0, function () {
         var symbols;
@@ -55,11 +57,13 @@ function main() {
                                 case 1:
                                     newMarketData = _a.sent();
                                     addNewDataToMarketData(newMarketData);
-                                    console.log(MarketData[0]);
+                                    clearExpiredPrices();
+                                    clearExpiredCharts();
+                                    checkCoinsCurrencyChange();
                                     return [2 /*return*/];
                             }
                         });
-                    }); }, 30000);
+                    }); }, intervalTime);
                     return [2 /*return*/];
             }
         });
@@ -84,5 +88,80 @@ function addNewDataToMarketData(newData) {
             });
         }
     });
+}
+function requestToCreateChart(candleStickData, coinName) {
+    return __awaiter(this, void 0, void 0, function () {
+        var chartGeneratorUrl;
+        return __generator(this, function (_a) {
+            chartGeneratorUrl = 'http://localhost:5000/createChart';
+            fetch(chartGeneratorUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    candleStickData: candleStickData,
+                    authToken: "47a8e376-2abb-452a-a96c-bc8ea4cf9f7e",
+                    watermark: "@binance_pump_detector"
+                })
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (imageId) { return coinsThatHaveChart.push({
+                coinName: coinName,
+                chartId: imageId,
+                createdTime: new Date().getDate(),
+            }); })
+                .catch(function (e) { return console.error('chart create error', e); });
+            return [2 /*return*/];
+        });
+    });
+}
+function checkCoinsCurrencyChange() {
+    var _this = this;
+    MarketData.map(function (coin) { return __awaiter(_this, void 0, void 0, function () {
+        var hourAgoPrice, modernPrice, candleStickData;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(coin.prices.length === 3600 / intervalTime)) return [3 /*break*/, 2];
+                    if (!(coinsThatHaveChart.findIndex(function (chart) { return chart.coinName === coin.symbol; }) === -1)) return [3 /*break*/, 2];
+                    hourAgoPrice = coin.prices[0].price;
+                    modernPrice = coin.prices[coin.prices.length - 1].price;
+                    if (!(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, (0, BinanceApp_1.getCandleStickData)(coin.symbol)];
+                case 1:
+                    candleStickData = _a.sent();
+                    requestToCreateChart(candleStickData, coin.symbol);
+                    _a.label = 2;
+                case 2: return [2 /*return*/];
+            }
+        });
+    }); });
+}
+function clearExpiredPrices() {
+    MarketData.map(function (coin) {
+        if (coin.prices.length > 3600 / intervalTime) {
+            coin.prices.shift();
+        }
+    });
+}
+function clearExpiredCharts() {
+    var expiredChartIndex;
+    var chartDeleteUrl = 'http://localhost:5000/deleteChart';
+    coinsThatHaveChart.map(function (chart, index) {
+        if (new Date().getDate() - chart.createdTime > 86400) {
+            expiredChartIndex = index;
+            fetch(chartDeleteUrl, {
+                method: "DELETE",
+                body: JSON.stringify({
+                    chartName: chart.chartId,
+                })
+            })
+                .catch(function (e) { return console.error('chart delete error ', e); });
+        }
+    });
+    if (expiredChartIndex !== undefined) {
+        coinsThatHaveChart.splice(expiredChartIndex, 1);
+    }
 }
 main();

@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkMarket = exports.getSymbols = void 0;
+exports.getCandleStickData = exports.checkMarket = exports.getSymbols = void 0;
 function getSymbols() {
     return __awaiter(this, void 0, void 0, function () {
         var response, data, filteredSymbols, btcSymbols;
@@ -84,3 +84,22 @@ function checkMarket(symbols) {
     });
 }
 exports.checkMarket = checkMarket;
+function getCandleStickData(coinName) {
+    return __awaiter(this, void 0, void 0, function () {
+        var candleStickDataURL, response, data;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    candleStickDataURL = "https://api.binance.com/api/v3/klines?symbol=".concat(coinName, "&interval=15m&limit=96");
+                    return [4 /*yield*/, fetch(candleStickDataURL)];
+                case 1:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    data = _a.sent();
+                    return [2 /*return*/, data];
+            }
+        });
+    });
+}
+exports.getCandleStickData = getCandleStickData;
