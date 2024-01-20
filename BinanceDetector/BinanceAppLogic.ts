@@ -1,5 +1,5 @@
 import { getSymbols, checkMarket, getCandleStickData } from "./BinanceApp"
-import { SymbolType, SymbolDataType } from "../Types/BinanceDetectorTypes";
+import { SymbolType, SymbolDataType } from "../Types/DataTypesForLogic";
 
 
 const MarketData: SymbolDataType[] = [];
