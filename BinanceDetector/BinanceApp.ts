@@ -1,4 +1,4 @@
-import { CandleStickDataType, PriceDataType, SymbolType } from "../Types/DataTypesForLogic";
+import { CandleStickDataType, PriceDataType, SymbolType } from "./Types/DataTypesForLogic";
 
 async function getSymbols(){
     const response = await fetch('https://api.binance.com/api/v3/exchangeInfo')
