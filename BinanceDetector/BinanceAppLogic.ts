@@ -1,5 +1,5 @@
 import { getSymbols, checkMarket, getCandleStickData } from "./BinanceApp";
-import { SymbolType, SymbolDataType } from "./Types/DataTypesForLogic";
+import { SymbolType, SymbolDataType, CandleStickDataType } from "./Types/DataTypesForLogic";
 
 const MarketData: SymbolDataType[] = [];
 const coinsThatHaveChart: {
@@ -9,6 +9,8 @@ const coinsThatHaveChart: {
 }[] = [];
 const intervalTime = 30000;
 
+let count = 0;
+
 async function main() {
   console.log("start");
   const symbols: SymbolType[] = await getSymbols();
@@ -17,9 +19,9 @@ async function main() {
     addNewDataToMarketData(newMarketData);
     checkCoinsCurrencyChange();
     clearExpiredPrices();
-    clearExpiredCharts();
-    console.log(MarketData.length);
-    console.log(MarketData[0]);
+    count++;
+    console.log('working ', (intervalTime * count) / 60000, ' minutes')
+    console.log(MarketData[0].prices[0])
   }, intervalTime);
 }
 
@@ -47,9 +49,10 @@ function addNewDataToMarketData(newData) {
   });
 }
 
-async function requestToCreateChart(candleStickData, coinName) {
+async function requestToCreateChart(candleStickData: CandleStickDataType[], coinName: SymbolType) {
   console.log("createChart");
   const chartGeneratorUrl = "http://localhost:5000/createChart";
+  console.log(coinName)
   fetch(chartGeneratorUrl, {
     method: "POST",
     headers: {
@@ -59,6 +62,7 @@ async function requestToCreateChart(candleStickData, coinName) {
       candleStickData,
       authToken: "47a8e376-2abb-452a-a96c-bc8ea4cf9f7e",
       watermark: "@binance_pump_detector",
+      coinName: coinName
     }),
   })
     .then((response) => response.json())
@@ -74,8 +78,10 @@ async function requestToCreateChart(candleStickData, coinName) {
 
 function checkCoinsCurrencyChange() {
   MarketData.map(async (coin) => {
+    const coinPricesArrayLastElementIndex = coin.prices.length - 1;
+    const hourInUNIXtimestamp = 60000 * 60;
     //проверка есть ли уже цены часовой давности
-    if (coin.prices.length === 3600 / intervalTime) {
+    if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
       // проверка есть ли уже график у монеты
       if (
         coinsThatHaveChart.findIndex(
@@ -85,7 +91,15 @@ function checkCoinsCurrencyChange() {
         const hourAgoPrice = coin.prices[0].price;
         const modernPrice = coin.prices[coin.prices.length - 1].price;
         if (((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5) {
-          const candleStickData = await getCandleStickData(coin.symbol);
+          const candleStickData: CandleStickDataType[] = await getCandleStickData(coin.symbol);
+          // check is coin open price and close price are the same
+          const onePercentOfChartSize = getOnePercentOfChart(candleStickData);
+          candleStickData.forEach(item => {
+            if (item[1] === item[4]) {
+              item[4] = (Number(item[4]) + onePercentOfChartSize) + '';
+            }
+          });
+
           requestToCreateChart(candleStickData, coin.symbol);
         }
       }
@@ -94,30 +108,29 @@ function checkCoinsCurrencyChange() {
 }
 
 function clearExpiredPrices() {
-  MarketData.map((coin) => {
-    if (coin.prices.length > 3600 / intervalTime) {
+  MarketData.forEach((coin) => {
+    const coinPricesArrayLastElementIndex = coin.prices.length - 1;
+    const hourInUNIXtimestamp = 60000 * 60;
+    if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
       coin.prices.shift();
+      console.log(coin.prices.shift())
     }
   });
 }
 
-function clearExpiredCharts() {
-  let expiredChartIndex;
-  const chartDeleteUrl = "http://localhost:5000/deleteChart";
-  coinsThatHaveChart.map((chart, index) => {
-    if (new Date().getDate() - chart.createdTime > 86400) {
-      expiredChartIndex = index;
-      fetch(chartDeleteUrl, {
-        method: "DELETE",
-        body: JSON.stringify({
-          chartName: chart.chartId,
-        }),
-      }).catch((e) => console.error("chart delete error ", e));
+function getOnePercentOfChart(chartData: CandleStickDataType[]){
+  let maxHigh = Number(chartData[0][2]);
+  let minLow = Number(chartData[0][3]);
+  for(let i = 0; i < chartData.length; i++){
+    if(Number(chartData[i][2]) > maxHigh){
+      maxHigh = Number(chartData[i][2]);
     }
-  });
-  if (expiredChartIndex !== undefined) {
-    coinsThatHaveChart.splice(expiredChartIndex, 1);
+    if(Number(chartData[i][3]) < minLow){
+      minLow = Number(chartData[i][3])
+    }
   }
+  const onePercent = (maxHigh - minLow) / 100;
+  return onePercent
 }
 
 main();

@@ -37,10 +37,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var chartjs_node_canvas_1 = require("chartjs-node-canvas");
-var fs_1 = require("fs");
 var helpers_1 = require("chart.js/helpers");
 var crypto = require("crypto");
-function createChart(chartData, watermarkText) {
+function createChart(chartData, watermarkText, coinName) {
     return __awaiter(this, void 0, void 0, function () {
         var maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, watermark, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer, name;
         return __generator(this, function (_a) {
@@ -212,10 +211,45 @@ function createChart(chartData, watermarkText) {
                 case 1:
                     buffer = _a.sent();
                     name = "".concat(crypto.randomUUID(), ".png");
-                    (0, fs_1.writeFileSync)("./public/".concat(name), buffer, 'base64');
+                    postImageInImgBB(buffer, name, coinName);
+                    // writeFileSync(`./public/${name}`, buffer, 'base64')
                     return [2 /*return*/, name];
             }
         });
     });
+}
+function postImageInImgBB(imgBuffer, imgName, coinName) {
+    return __awaiter(this, void 0, void 0, function () {
+        var imgBlob, formData, response, data, e_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    imgBlob = new Blob([imgBuffer], { type: 'image/png' });
+                    formData = new FormData();
+                    formData.append('image', imgBlob, imgName);
+                    return [4 /*yield*/, fetch("https://api.imgbb.com/1/upload?key=".concat('82f692bde4e1516fa31244c33685cdb8'), {
+                            method: 'POST',
+                            body: formData,
+                        })];
+                case 1:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    data = _a.sent();
+                    postImageInChannel(data.data.url, coinName);
+                    return [3 /*break*/, 4];
+                case 3:
+                    e_1 = _a.sent();
+                    console.error('Error posting image in ImgBB', e_1);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+function postImageInChannel(imgUrl, coinName) {
+    fetch("https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=".concat(imgUrl, "&caption=").concat(coinName))
+        .catch(function (e) { return console.error('error posting image in channel', e); });
 }
 exports.default = createChart;
