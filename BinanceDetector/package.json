@@ -1,0 +1,16 @@
+{
+  "name": "binancedetector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "BinanceApp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  }
+}

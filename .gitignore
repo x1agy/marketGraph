@@ -1,2 +1,3 @@
 git
-/node_modules
+/ChartGenerator/node_modules
+/BinanceDetector/node_modules

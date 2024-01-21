@@ -46,7 +46,9 @@ function main() {
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, BinanceApp_1.getSymbols)()];
+                case 0:
+                    console.log("start");
+                    return [4 /*yield*/, (0, BinanceApp_1.getSymbols)()];
                 case 1:
                     symbols = _a.sent();
                     setInterval(function () { return __awaiter(_this, void 0, void 0, function () {
@@ -57,9 +59,11 @@ function main() {
                                 case 1:
                                     newMarketData = _a.sent();
                                     addNewDataToMarketData(newMarketData);
-                                    clearExpiredPrices();
-                                    clearExpiredCharts();
                                     checkCoinsCurrencyChange();
+                                    // clearExpiredPrices();
+                                    clearExpiredCharts();
+                                    console.log(MarketData.length);
+                                    console.log(MarketData[0]);
                                     return [2 /*return*/];
                             }
                         });
@@ -81,10 +85,12 @@ function addNewDataToMarketData(newData) {
         else {
             MarketData.push({
                 symbol: coinData.symbol,
-                prices: [{
+                prices: [
+                    {
                         price: coinData.price,
                         time: new Date().getTime(),
-                    }]
+                    },
+                ],
             });
         }
     });
@@ -93,25 +99,28 @@ function requestToCreateChart(candleStickData, coinName) {
     return __awaiter(this, void 0, void 0, function () {
         var chartGeneratorUrl;
         return __generator(this, function (_a) {
-            chartGeneratorUrl = 'http://localhost:5000/createChart';
+            console.log("createChart");
+            chartGeneratorUrl = "http://localhost:5000/createChart";
             fetch(chartGeneratorUrl, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     candleStickData: candleStickData,
                     authToken: "47a8e376-2abb-452a-a96c-bc8ea4cf9f7e",
-                    watermark: "@binance_pump_detector"
-                })
+                    watermark: "@binance_pump_detector",
+                }),
             })
                 .then(function (response) { return response.json(); })
-                .then(function (imageId) { return coinsThatHaveChart.push({
-                coinName: coinName,
-                chartId: imageId,
-                createdTime: new Date().getDate(),
-            }); })
-                .catch(function (e) { return console.error('chart create error', e); });
+                .then(function (imageId) {
+                return coinsThatHaveChart.push({
+                    coinName: coinName,
+                    chartId: imageId,
+                    createdTime: new Date().getDate(),
+                });
+            })
+                .catch(function (e) { return console.error("chart create error", e); });
             return [2 /*return*/];
         });
     });
@@ -147,7 +156,7 @@ function clearExpiredPrices() {
 }
 function clearExpiredCharts() {
     var expiredChartIndex;
-    var chartDeleteUrl = 'http://localhost:5000/deleteChart';
+    var chartDeleteUrl = "http://localhost:5000/deleteChart";
     coinsThatHaveChart.map(function (chart, index) {
         if (new Date().getDate() - chart.createdTime > 86400) {
             expiredChartIndex = index;
@@ -155,9 +164,8 @@ function clearExpiredCharts() {
                 method: "DELETE",
                 body: JSON.stringify({
                     chartName: chart.chartId,
-                })
-            })
-                .catch(function (e) { return console.error('chart delete error ', e); });
+                }),
+            }).catch(function (e) { return console.error("chart delete error ", e); });
         }
     });
     if (expiredChartIndex !== undefined) {
