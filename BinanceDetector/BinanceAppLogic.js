@@ -40,6 +40,7 @@ var BinanceApp_1 = require("./BinanceApp");
 var MarketData = [];
 var coinsThatHaveChart = [];
 var intervalTime = 30000;
+var count = 0;
 function main() {
     return __awaiter(this, void 0, void 0, function () {
         var symbols;
@@ -60,10 +61,10 @@ function main() {
                                     newMarketData = _a.sent();
                                     addNewDataToMarketData(newMarketData);
                                     checkCoinsCurrencyChange();
-                                    // clearExpiredPrices();
-                                    clearExpiredCharts();
-                                    console.log(MarketData.length);
-                                    console.log(MarketData[0]);
+                                    clearExpiredPrices();
+                                    count++;
+                                    console.log('working ', (intervalTime * count) / 60000, ' minutes');
+                                    console.log(MarketData[0].prices[0]);
                                     return [2 /*return*/];
                             }
                         });
@@ -101,6 +102,7 @@ function requestToCreateChart(candleStickData, coinName) {
         return __generator(this, function (_a) {
             console.log("createChart");
             chartGeneratorUrl = "http://localhost:5000/createChart";
+            console.log(coinName);
             fetch(chartGeneratorUrl, {
                 method: "POST",
                 headers: {
@@ -110,6 +112,7 @@ function requestToCreateChart(candleStickData, coinName) {
                     candleStickData: candleStickData,
                     authToken: "47a8e376-2abb-452a-a96c-bc8ea4cf9f7e",
                     watermark: "@binance_pump_detector",
+                    coinName: coinName
                 }),
             })
                 .then(function (response) { return response.json(); })
@@ -128,18 +131,26 @@ function requestToCreateChart(candleStickData, coinName) {
 function checkCoinsCurrencyChange() {
     var _this = this;
     MarketData.map(function (coin) { return __awaiter(_this, void 0, void 0, function () {
-        var hourAgoPrice, modernPrice, candleStickData;
+        var coinPricesArrayLastElementIndex, hourInUNIXtimestamp, hourAgoPrice, modernPrice, candleStickData, onePercentOfChartSize_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (!(coin.prices.length === 3600 / intervalTime)) return [3 /*break*/, 2];
+                    coinPricesArrayLastElementIndex = coin.prices.length - 1;
+                    hourInUNIXtimestamp = 60000 * 60;
                     if (!(coinsThatHaveChart.findIndex(function (chart) { return chart.coinName === coin.symbol; }) === -1)) return [3 /*break*/, 2];
                     hourAgoPrice = coin.prices[0].price;
                     modernPrice = coin.prices[coin.prices.length - 1].price;
-                    if (!(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5)) return [3 /*break*/, 2];
+                    if (!(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 0.007)) return [3 /*break*/, 2];
                     return [4 /*yield*/, (0, BinanceApp_1.getCandleStickData)(coin.symbol)];
                 case 1:
                     candleStickData = _a.sent();
+                    onePercentOfChartSize_1 = getOnePercentOfChart(candleStickData);
+                    console.log(onePercentOfChartSize_1, '------1%');
+                    candleStickData.forEach(function (item) {
+                        if (item[1] === item[4]) {
+                            item[4] = (Number(item[4]) + onePercentOfChartSize_1) + '';
+                        }
+                    });
                     requestToCreateChart(candleStickData, coin.symbol);
                     _a.label = 2;
                 case 2: return [2 /*return*/];
@@ -148,28 +159,27 @@ function checkCoinsCurrencyChange() {
     }); });
 }
 function clearExpiredPrices() {
-    MarketData.map(function (coin) {
-        if (coin.prices.length > 3600 / intervalTime) {
+    MarketData.forEach(function (coin) {
+        var coinPricesArrayLastElementIndex = coin.prices.length - 1;
+        var hourInUNIXtimestamp = 60000 * 60;
+        if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > 70000) {
             coin.prices.shift();
+            console.log(coin.prices.shift());
         }
     });
 }
-function clearExpiredCharts() {
-    var expiredChartIndex;
-    var chartDeleteUrl = "http://localhost:5000/deleteChart";
-    coinsThatHaveChart.map(function (chart, index) {
-        if (new Date().getDate() - chart.createdTime > 86400) {
-            expiredChartIndex = index;
-            fetch(chartDeleteUrl, {
-                method: "DELETE",
-                body: JSON.stringify({
-                    chartName: chart.chartId,
-                }),
-            }).catch(function (e) { return console.error("chart delete error ", e); });
+function getOnePercentOfChart(chartData) {
+    var maxHigh = Number(chartData[0][2]);
+    var minLow = Number(chartData[0][3]);
+    for (var i = 0; i < chartData.length; i++) {
+        if (Number(chartData[i][2]) > maxHigh) {
+            maxHigh = Number(chartData[i][2]);
         }
-    });
-    if (expiredChartIndex !== undefined) {
-        coinsThatHaveChart.splice(expiredChartIndex, 1);
+        if (Number(chartData[i][3]) < minLow) {
+            minLow = Number(chartData[i][3]);
+        }
     }
+    var onePercent = (maxHigh - minLow) / 100;
+    return onePercent;
 }
 main();

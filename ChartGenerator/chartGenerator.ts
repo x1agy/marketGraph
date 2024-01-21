@@ -4,7 +4,7 @@ import { writeFileSync } from 'fs'
 import { toRadians } from 'chart.js/helpers'
 import * as crypto from 'crypto'
 
-async function createChart(chartData, watermarkText) {
+async function createChart(chartData, watermarkText, coinName) {
   let maxDate = -Infinity
   let minDate = +Infinity
   let maxValue = -Infinity
@@ -198,8 +198,31 @@ async function createChart(chartData, watermarkText) {
   })
   const buffer = await chartJSNodeCanvas.renderToBuffer(configuration)
   const name = `${crypto.randomUUID()}.png`
-  writeFileSync(`./public/${name}`, buffer, 'base64')
+  postImageInImgBB(buffer, name, coinName)
   return name
+}
+
+async function postImageInImgBB(imgBuffer, imgName, coinName) {
+  try {
+    const imgBlob = new Blob([imgBuffer], { type: 'image/png' });
+    const formData = new FormData();
+    formData.append('image', imgBlob, imgName);
+
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${'82f692bde4e1516fa31244c33685cdb8'}`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+    postImageInChannel(data.data.url, coinName)
+  } catch (e) {
+    console.error('Error posting image in ImgBB', e);
+  }
+}
+
+function postImageInChannel(imgUrl, coinName){
+  fetch(`https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=${imgUrl}&caption=${coinName}`)
+    .catch(e => console.error('error posting image in channel', e))
 }
 
 export default createChart
