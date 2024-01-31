@@ -1,30 +1,30 @@
-import { ChartJSNodeCanvas, ChartCallback } from 'chartjs-node-canvas'
-import { ChartConfiguration } from 'chart.js'
-import { writeFileSync } from 'fs'
-import { toRadians } from 'chart.js/helpers'
-import * as crypto from 'crypto'
+import { ChartJSNodeCanvas, ChartCallback } from "chartjs-node-canvas";
+import { ChartConfiguration } from "chart.js";
+import { writeFileSync } from "fs";
+import { toRadians } from "chart.js/helpers";
+import * as crypto from "crypto";
 
 async function createChart(chartData, watermarkText, coinName) {
-  let maxDate = -Infinity
-  let minDate = +Infinity
-  let maxValue = -Infinity
-  let minValue = +Infinity
+  let maxDate = -Infinity;
+  let minDate = +Infinity;
+  let maxValue = -Infinity;
+  let minValue = +Infinity;
 
-  const data = []
+  const data = [];
 
   for (let i of chartData) {
     // переменные для отступов от границ
     if (i[0] > maxDate) {
-      maxDate = i[0]
+      maxDate = i[0];
     }
     if (i[0] < minDate) {
-      minDate = i[0]
+      minDate = i[0];
     }
     if (i[3] < minValue) {
-      minValue = i[3]
+      minValue = i[3];
     }
     if (i[2] > maxValue) {
-      maxValue = i[2]
+      maxValue = i[2];
     }
 
     //@ts-ignore
@@ -35,100 +35,85 @@ async function createChart(chartData, watermarkText, coinName) {
       l: i[3],
       c: i[4],
       s: [i[1], i[4]],
-    })
+    });
   }
 
   const candleStick = {
-    id: 'background-colour',
+    id: "background-colour",
     beforeDraw: (chart) => {
       const {
         ctx,
         data,
         chartArea: { top, bottom, left, right, width, height },
         scales: { x, y },
-      } = chart
-      ctx.save()
-      ctx.fillStyle = 'black'
-      ctx.fillRect(0, 0, width + 300, height + 300)
-      ctx.restore()
-      ctx.lineWidth = 1
-      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'
+      } = chart;
+      ctx.save();
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, width + 300, height + 300);
+      ctx.restore();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255, 255, 255, 1)";
       // незакрашенные линии
       data.datasets[0].data.forEach((dataPoint, index) => {
         //@ts-ignore
-        const color =
-          dataPoint.o <= dataPoint.c
-            ? 'rgba(11, 156, 49, 1)'
-            : 'rgba(255, 0, 0, 1)'
+        const color = dataPoint.o <= dataPoint.c ? "rgba(11, 156, 49, 1)" : "rgba(255, 0, 0, 1)";
 
-        ctx.beginPath()
-        ctx.moveTo(
-          chart.getDatasetMeta(0).data[index].x,
-          chart.getDatasetMeta(0).data[index].y
-        )
+        ctx.beginPath();
+        ctx.moveTo(chart.getDatasetMeta(0).data[index].x, chart.getDatasetMeta(0).data[index].y);
         //@ts-ignore
-        ctx.lineTo(
-          chart.getDatasetMeta(0).data[index].x,
-          y.getPixelForValue(dataPoint.h)
-        )
-        ctx.strokeStyle = color
-        ctx.stroke()
+        ctx.lineTo(chart.getDatasetMeta(0).data[index].x, y.getPixelForValue(dataPoint.h));
+        ctx.strokeStyle = color;
+        ctx.stroke();
 
-        ctx.beginPath()
-        ctx.moveTo(
-          chart.getDatasetMeta(0).data[index].x,
-          chart.getDatasetMeta(0).data[index].y
-        )
+        ctx.beginPath();
+        ctx.moveTo(chart.getDatasetMeta(0).data[index].x, chart.getDatasetMeta(0).data[index].y);
         //@ts-ignore
-        ctx.lineTo(
-          chart.getDatasetMeta(0).data[index].x,
-          y.getPixelForValue(dataPoint.l)
-        )
-        ctx.strokeStyle = color
-        ctx.stroke()
-      })
+        ctx.lineTo(chart.getDatasetMeta(0).data[index].x, y.getPixelForValue(dataPoint.l));
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      });
     },
-  }
+  };
 
   const watermark = {
-    id: 'watermark',
+    id: "watermark",
     afterDraw(chart, args, plugins) {
       const {
         ctx,
         chartArea: { top, bottom, left, right, width, height },
-      } = chart
+      } = chart;
 
-      ctx.save()
-      ctx.font = 'bold 50px sans-serif'
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
-      ctx.textAlign = 'center'
-      const centerX = width / 2 + left
-      const centerY = height / 2 + top
-      ctx.translate(centerX, centerY)
-      ctx.rotate(toRadians(-15))
-      ctx.fillText(watermarkText, 0, 0)
-      ctx.restore()
+      ctx.save();
+      ctx.font = "bold 50px sans-serif";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.textAlign = "center";
+      const centerX = width / 2 + left;
+      const centerY = height / 2 + top;
+      ctx.translate(centerX, centerY);
+      ctx.rotate(toRadians(-15));
+      ctx.fillText(watermarkText, 0, 0);
+      ctx.restore();
     },
-  }
+  };
 
-  const width = 1400
-  const height = 700
+  const width = 1400;
+  const height = 700;
   const configuration: ChartConfiguration = {
-    type: 'bar',
+    type: "bar",
     data: {
       datasets: [
         {
           data,
           backgroundColor: (ctx) => {
-            let color
+            let color;
             if (ctx.raw.o <= ctx.raw.c) {
-              color = 'rgba(11, 156, 49, 1)'
+              color = "rgba(11, 156, 49, 1)";
             } else {
-              color = 'rgba(255, 0, 0, 1)'
+              color = "rgba(255, 0, 0, 1)";
             }
-            return color
+            return color;
           },
-          borderColor: 'rgba(0, 0, 0, 1)',
+          borderColor: "rgba(0, 0, 0, 1)",
           borderWidth: 1,
           borderSkipped: false,
         },
@@ -137,17 +122,17 @@ async function createChart(chartData, watermarkText, coinName) {
     options: {
       responsive: true,
       parsing: {
-        xAxisKey: 'x',
-        yAxisKey: 's',
+        xAxisKey: "x",
+        yAxisKey: "s",
       },
       scales: {
         x: {
-          type: 'timeseries',
+          type: "timeseries",
           beginAtZero: false,
           ticks: {
             font: {
               size: 16,
-              weight: '800',
+              weight: "800",
             },
             backdropPadding: 20,
           },
@@ -158,18 +143,18 @@ async function createChart(chartData, watermarkText, coinName) {
         },
 
         y: {
-          type: 'linear',
-          position: 'right',
+          type: "linear",
+          position: "right",
           beginAtZero: false,
           ticks: {
             font: {
               size: 16,
-              weight: '800',
+              weight: "800",
             },
             padding: 20,
             callback: function (value, index, values) {
               // Форматирование чисел без научной нотации
-              return value.toLocaleString('en-US', { maximumFractionDigits: 9 })
+              return value.toLocaleString("en-US", { maximumFractionDigits: 9 });
             },
           },
           suggestedMax: maxValue,
@@ -183,46 +168,41 @@ async function createChart(chartData, watermarkText, coinName) {
       },
     },
     plugins: [candleStick, watermark],
-  }
+  };
   const chartCallback: ChartCallback = (ChartJS) => {
-    ChartJS.defaults.responsive = true
-    ChartJS.defaults.maintainAspectRatio = false
-  }
+    ChartJS.defaults.responsive = true;
+    ChartJS.defaults.maintainAspectRatio = false;
+  };
   const chartJSNodeCanvas = new ChartJSNodeCanvas({
     width,
     height,
     plugins: {
-      modern: [require('chartjs-adapter-date-fns')],
+      modern: [require("chartjs-adapter-date-fns")],
     },
     chartCallback,
-  })
-  const buffer = await chartJSNodeCanvas.renderToBuffer(configuration)
-  const name = `${crypto.randomUUID()}.png`
-  postImageInImgBB(buffer, name, coinName)
-  return name
+  });
+  const buffer = await chartJSNodeCanvas.renderToBuffer(configuration);
+  const name = `${crypto.randomUUID()}.png`;
+  const imageURL = await postImageInImgBB(buffer, name);
+  return imageURL;
 }
 
-async function postImageInImgBB(imgBuffer, imgName, coinName) {
+async function postImageInImgBB(imgBuffer, imgName) {
   try {
-    const imgBlob = new Blob([imgBuffer], { type: 'image/png' });
+    const imgBlob = new Blob([imgBuffer], { type: "image/png" });
     const formData = new FormData();
-    formData.append('image', imgBlob, imgName);
+    formData.append("image", imgBlob, imgName);
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${'82f692bde4e1516fa31244c33685cdb8'}`, {
-      method: 'POST',
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${"c2a131fb077a77de67a12f1c98faec42"}`, {
+      method: "POST",
       body: formData,
     });
-
     const data = await response.json();
-    postImageInChannel(data.data.url, coinName)
+    console.log(data);
+    return data.data.url
   } catch (e) {
-    console.error('Error posting image in ImgBB', e);
+    console.error("Error posting image in ImgBB", e);
   }
 }
 
-function postImageInChannel(imgUrl, coinName){
-  fetch(`https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=${imgUrl}&caption=${coinName}`)
-    .catch(e => console.error('error posting image in channel', e))
-}
-
-export default createChart
+export default createChart;
