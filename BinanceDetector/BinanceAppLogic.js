@@ -40,6 +40,10 @@ var BinanceApp_1 = require("./BinanceApp");
 var MarketData = [];
 var coinsThatHaveChart = [];
 var intervalTime = 30000;
+// const hourInUNIXtimestamp = 60000 * 60;
+// const percent = 0.05;
+var hourInUNIXtimestamp = 1000 * 60;
+var percent = 0.00001;
 var count = 0;
 function main() {
     return __awaiter(this, void 0, void 0, function () {
@@ -63,8 +67,7 @@ function main() {
                                     checkCoinsCurrencyChange();
                                     clearExpiredPrices();
                                     count++;
-                                    console.log('working ', (intervalTime * count) / 60000, ' minutes');
-                                    console.log(MarketData[0].prices[0]);
+                                    console.log("working ", (intervalTime * count) / 60000, " minutes");
                                     return [2 /*return*/];
                             }
                         });
@@ -112,14 +115,15 @@ function requestToCreateChart(candleStickData, coinName) {
                     candleStickData: candleStickData,
                     authToken: "47a8e376-2abb-452a-a96c-bc8ea4cf9f7e",
                     watermark: "@binance_pump_detector",
-                    coinName: coinName
                 }),
             })
                 .then(function (response) { return response.json(); })
-                .then(function (imageId) {
-                return coinsThatHaveChart.push({
+                .then(function (data) {
+                console.log(data);
+                postImageInChannel(data.imageUrl, "gr");
+                coinsThatHaveChart.push({
                     coinName: coinName,
-                    chartId: imageId,
+                    chartId: data.imageId,
                     createdTime: new Date().getDate(),
                 });
             })
@@ -131,29 +135,30 @@ function requestToCreateChart(candleStickData, coinName) {
 function checkCoinsCurrencyChange() {
     var _this = this;
     MarketData.map(function (coin) { return __awaiter(_this, void 0, void 0, function () {
-        var coinPricesArrayLastElementIndex, hourInUNIXtimestamp, hourAgoPrice, modernPrice, candleStickData, onePercentOfChartSize_1;
+        var coinPricesArrayLastElementIndex, hourAgoPrice, modernPrice, candleStickData, onePercentOfChartSize_1, response;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     coinPricesArrayLastElementIndex = coin.prices.length - 1;
-                    hourInUNIXtimestamp = 60000 * 60;
-                    if (!(coinsThatHaveChart.findIndex(function (chart) { return chart.coinName === coin.symbol; }) === -1)) return [3 /*break*/, 2];
+                    if (!(coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp)) return [3 /*break*/, 3];
+                    if (!(coinsThatHaveChart.findIndex(function (chart) { return chart.coinName === coin.symbol; }) === -1)) return [3 /*break*/, 3];
                     hourAgoPrice = coin.prices[0].price;
                     modernPrice = coin.prices[coin.prices.length - 1].price;
-                    if (!(((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 0.007)) return [3 /*break*/, 2];
+                    if (!((modernPrice - hourAgoPrice) / hourAgoPrice > percent)) return [3 /*break*/, 3];
                     return [4 /*yield*/, (0, BinanceApp_1.getCandleStickData)(coin.symbol)];
                 case 1:
                     candleStickData = _a.sent();
                     onePercentOfChartSize_1 = getOnePercentOfChart(candleStickData);
-                    console.log(onePercentOfChartSize_1, '------1%');
                     candleStickData.forEach(function (item) {
                         if (item[1] === item[4]) {
-                            item[4] = (Number(item[4]) + onePercentOfChartSize_1) + '';
+                            item[4] = Number(item[4]) + onePercentOfChartSize_1 + "";
                         }
                     });
-                    requestToCreateChart(candleStickData, coin.symbol);
-                    _a.label = 2;
-                case 2: return [2 /*return*/];
+                    return [4 /*yield*/, requestToCreateChart(candleStickData, coin.symbol)];
+                case 2:
+                    response = _a.sent();
+                    _a.label = 3;
+                case 3: return [2 /*return*/];
             }
         });
     }); });
@@ -161,8 +166,7 @@ function checkCoinsCurrencyChange() {
 function clearExpiredPrices() {
     MarketData.forEach(function (coin) {
         var coinPricesArrayLastElementIndex = coin.prices.length - 1;
-        var hourInUNIXtimestamp = 60000 * 60;
-        if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > 70000) {
+        if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
             coin.prices.shift();
             console.log(coin.prices.shift());
         }
@@ -181,5 +185,8 @@ function getOnePercentOfChart(chartData) {
     }
     var onePercent = (maxHigh - minLow) / 100;
     return onePercent;
+}
+function postImageInChannel(imgUrl, coinName) {
+    fetch("https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=".concat(imgUrl, "&caption=").concat(coinName)).catch(function (e) { return console.error("error posting image in channel", e); });
 }
 main();

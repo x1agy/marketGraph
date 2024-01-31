@@ -41,7 +41,7 @@ var helpers_1 = require("chart.js/helpers");
 var crypto = require("crypto");
 function createChart(chartData, watermarkText, coinName) {
     return __awaiter(this, void 0, void 0, function () {
-        var maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, watermark, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer, name;
+        var maxDate, minDate, maxValue, minValue, data, _i, chartData_1, i, candleStick, watermark, width, height, configuration, chartCallback, chartJSNodeCanvas, buffer, name, imageURL;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -76,21 +76,19 @@ function createChart(chartData, watermarkText, coinName) {
                         });
                     }
                     candleStick = {
-                        id: 'background-colour',
+                        id: "background-colour",
                         beforeDraw: function (chart) {
                             var ctx = chart.ctx, data = chart.data, _a = chart.chartArea, top = _a.top, bottom = _a.bottom, left = _a.left, right = _a.right, width = _a.width, height = _a.height, _b = chart.scales, x = _b.x, y = _b.y;
                             ctx.save();
-                            ctx.fillStyle = 'black';
+                            ctx.fillStyle = "black";
                             ctx.fillRect(0, 0, width + 300, height + 300);
                             ctx.restore();
                             ctx.lineWidth = 1;
-                            ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                            ctx.strokeStyle = "rgba(255, 255, 255, 1)";
                             // незакрашенные линии
                             data.datasets[0].data.forEach(function (dataPoint, index) {
                                 //@ts-ignore
-                                var color = dataPoint.o <= dataPoint.c
-                                    ? 'rgba(11, 156, 49, 1)'
-                                    : 'rgba(255, 0, 0, 1)';
+                                var color = dataPoint.o <= dataPoint.c ? "rgba(11, 156, 49, 1)" : "rgba(255, 0, 0, 1)";
                                 ctx.beginPath();
                                 ctx.moveTo(chart.getDatasetMeta(0).data[index].x, chart.getDatasetMeta(0).data[index].y);
                                 //@ts-ignore
@@ -107,13 +105,13 @@ function createChart(chartData, watermarkText, coinName) {
                         },
                     };
                     watermark = {
-                        id: 'watermark',
+                        id: "watermark",
                         afterDraw: function (chart, args, plugins) {
                             var ctx = chart.ctx, _a = chart.chartArea, top = _a.top, bottom = _a.bottom, left = _a.left, right = _a.right, width = _a.width, height = _a.height;
                             ctx.save();
-                            ctx.font = 'bold 50px sans-serif';
-                            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                            ctx.textAlign = 'center';
+                            ctx.font = "bold 50px sans-serif";
+                            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                            ctx.textAlign = "center";
                             var centerX = width / 2 + left;
                             var centerY = height / 2 + top;
                             ctx.translate(centerX, centerY);
@@ -125,7 +123,7 @@ function createChart(chartData, watermarkText, coinName) {
                     width = 1400;
                     height = 700;
                     configuration = {
-                        type: 'bar',
+                        type: "bar",
                         data: {
                             datasets: [
                                 {
@@ -133,14 +131,14 @@ function createChart(chartData, watermarkText, coinName) {
                                     backgroundColor: function (ctx) {
                                         var color;
                                         if (ctx.raw.o <= ctx.raw.c) {
-                                            color = 'rgba(11, 156, 49, 1)';
+                                            color = "rgba(11, 156, 49, 1)";
                                         }
                                         else {
-                                            color = 'rgba(255, 0, 0, 1)';
+                                            color = "rgba(255, 0, 0, 1)";
                                         }
                                         return color;
                                     },
-                                    borderColor: 'rgba(0, 0, 0, 1)',
+                                    borderColor: "rgba(0, 0, 0, 1)",
                                     borderWidth: 1,
                                     borderSkipped: false,
                                 },
@@ -149,17 +147,17 @@ function createChart(chartData, watermarkText, coinName) {
                         options: {
                             responsive: true,
                             parsing: {
-                                xAxisKey: 'x',
-                                yAxisKey: 's',
+                                xAxisKey: "x",
+                                yAxisKey: "s",
                             },
                             scales: {
                                 x: {
-                                    type: 'timeseries',
+                                    type: "timeseries",
                                     beginAtZero: false,
                                     ticks: {
                                         font: {
                                             size: 16,
-                                            weight: '800',
+                                            weight: "800",
                                         },
                                         backdropPadding: 20,
                                     },
@@ -169,18 +167,18 @@ function createChart(chartData, watermarkText, coinName) {
                                     max: new Date(maxDate + 3000000),
                                 },
                                 y: {
-                                    type: 'linear',
-                                    position: 'right',
+                                    type: "linear",
+                                    position: "right",
                                     beginAtZero: false,
                                     ticks: {
                                         font: {
                                             size: 16,
-                                            weight: '800',
+                                            weight: "800",
                                         },
                                         padding: 20,
                                         callback: function (value, index, values) {
                                             // Форматирование чисел без научной нотации
-                                            return value.toLocaleString('en-US', { maximumFractionDigits: 9 });
+                                            return value.toLocaleString("en-US", { maximumFractionDigits: 9 });
                                         },
                                     },
                                     suggestedMax: maxValue,
@@ -203,7 +201,7 @@ function createChart(chartData, watermarkText, coinName) {
                         width: width,
                         height: height,
                         plugins: {
-                            modern: [require('chartjs-adapter-date-fns')],
+                            modern: [require("chartjs-adapter-date-fns")],
                         },
                         chartCallback: chartCallback,
                     });
@@ -211,25 +209,26 @@ function createChart(chartData, watermarkText, coinName) {
                 case 1:
                     buffer = _a.sent();
                     name = "".concat(crypto.randomUUID(), ".png");
-                    postImageInImgBB(buffer, name, coinName);
-                    // writeFileSync(`./public/${name}`, buffer, 'base64')
-                    return [2 /*return*/, name];
+                    return [4 /*yield*/, postImageInImgBB(buffer, name)];
+                case 2:
+                    imageURL = _a.sent();
+                    return [2 /*return*/, imageURL];
             }
         });
     });
 }
-function postImageInImgBB(imgBuffer, imgName, coinName) {
+function postImageInImgBB(imgBuffer, imgName) {
     return __awaiter(this, void 0, void 0, function () {
         var imgBlob, formData, response, data, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 3, , 4]);
-                    imgBlob = new Blob([imgBuffer], { type: 'image/png' });
+                    imgBlob = new Blob([imgBuffer], { type: "image/png" });
                     formData = new FormData();
-                    formData.append('image', imgBlob, imgName);
-                    return [4 /*yield*/, fetch("https://api.imgbb.com/1/upload?key=".concat('82f692bde4e1516fa31244c33685cdb8'), {
-                            method: 'POST',
+                    formData.append("image", imgBlob, imgName);
+                    return [4 /*yield*/, fetch("https://api.imgbb.com/1/upload?key=".concat("c2a131fb077a77de67a12f1c98faec42"), {
+                            method: "POST",
                             body: formData,
                         })];
                 case 1:
@@ -237,19 +236,15 @@ function postImageInImgBB(imgBuffer, imgName, coinName) {
                     return [4 /*yield*/, response.json()];
                 case 2:
                     data = _a.sent();
-                    postImageInChannel(data.data.url, coinName);
-                    return [3 /*break*/, 4];
+                    console.log(data);
+                    return [2 /*return*/, data.data.url];
                 case 3:
                     e_1 = _a.sent();
-                    console.error('Error posting image in ImgBB', e_1);
+                    console.error("Error posting image in ImgBB", e_1);
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
         });
     });
-}
-function postImageInChannel(imgUrl, coinName) {
-    fetch("https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=".concat(imgUrl, "&caption=").concat(coinName))
-        .catch(function (e) { return console.error('error posting image in channel', e); });
 }
 exports.default = createChart;

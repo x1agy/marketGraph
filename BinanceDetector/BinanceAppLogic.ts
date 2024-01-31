@@ -8,6 +8,10 @@ const coinsThatHaveChart: {
   createdTime: number;
 }[] = [];
 const intervalTime = 30000;
+// const hourInUNIXtimestamp = 60000 * 60;
+// const percent = 0.05;
+const hourInUNIXtimestamp = 1000 * 60;
+const percent = 0.00001;
 
 let count = 0;
 
@@ -20,16 +24,13 @@ async function main() {
     checkCoinsCurrencyChange();
     clearExpiredPrices();
     count++;
-    console.log('working ', (intervalTime * count) / 60000, ' minutes')
-    console.log(MarketData[0].prices[0])
+    console.log("working ", (intervalTime * count) / 60000, " minutes");
   }, intervalTime);
 }
 
 function addNewDataToMarketData(newData) {
   newData.map((coinData) => {
-    const coinIndex = MarketData.findIndex(
-      (item) => item.symbol === coinData.symbol
-    );
+    const coinIndex = MarketData.findIndex((item) => item.symbol === coinData.symbol);
     if (coinIndex !== -1) {
       MarketData[coinIndex].prices.push({
         price: coinData.price,
@@ -50,9 +51,7 @@ function addNewDataToMarketData(newData) {
 }
 
 async function requestToCreateChart(candleStickData: CandleStickDataType[], coinName: SymbolType) {
-  console.log("createChart");
   const chartGeneratorUrl = "http://localhost:5000/createChart";
-  console.log(coinName)
   fetch(chartGeneratorUrl, {
     method: "POST",
     headers: {
@@ -62,45 +61,41 @@ async function requestToCreateChart(candleStickData: CandleStickDataType[], coin
       candleStickData,
       authToken: "47a8e376-2abb-452a-a96c-bc8ea4cf9f7e",
       watermark: "@binance_pump_detector",
-      coinName: coinName
     }),
   })
     .then((response) => response.json())
-    .then((imageId) =>
+    .then((data) => {
+      console.log(data);
+      postImageInChannel(data.imageURL, coinName.slice(0, -3));
       coinsThatHaveChart.push({
         coinName: coinName,
-        chartId: imageId,
+        chartId: data.imageId,
         createdTime: new Date().getDate(),
-      })
-    )
+      });
+    })
     .catch((e) => console.error("chart create error", e));
 }
 
 function checkCoinsCurrencyChange() {
   MarketData.map(async (coin) => {
     const coinPricesArrayLastElementIndex = coin.prices.length - 1;
-    const hourInUNIXtimestamp = 60000 * 60;
     //проверка есть ли уже цены часовой давности
     if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
       // проверка есть ли уже график у монеты
-      if (
-        coinsThatHaveChart.findIndex(
-          (chart) => chart.coinName === coin.symbol
-        ) === -1
-      ) {
+      if (coinsThatHaveChart.findIndex((chart) => chart.coinName === coin.symbol) === -1) {
         const hourAgoPrice = coin.prices[0].price;
         const modernPrice = coin.prices[coin.prices.length - 1].price;
-        if (((hourAgoPrice - modernPrice) / hourAgoPrice) * -1 > 5) {
+        if ((modernPrice - hourAgoPrice) / hourAgoPrice > percent) {
           const candleStickData: CandleStickDataType[] = await getCandleStickData(coin.symbol);
           // check is coin open price and close price are the same
           const onePercentOfChartSize = getOnePercentOfChart(candleStickData);
-          candleStickData.forEach(item => {
+          candleStickData.forEach((item) => {
             if (item[1] === item[4]) {
-              item[4] = (Number(item[4]) + onePercentOfChartSize) + '';
+              item[4] = Number(item[4]) + onePercentOfChartSize + "";
             }
           });
 
-          requestToCreateChart(candleStickData, coin.symbol);
+          const response = await requestToCreateChart(candleStickData, coin.symbol);
         }
       }
     }
@@ -110,27 +105,32 @@ function checkCoinsCurrencyChange() {
 function clearExpiredPrices() {
   MarketData.forEach((coin) => {
     const coinPricesArrayLastElementIndex = coin.prices.length - 1;
-    const hourInUNIXtimestamp = 60000 * 60;
     if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
       coin.prices.shift();
-      console.log(coin.prices.shift())
+      console.log(coin.prices.shift());
     }
   });
 }
 
-function getOnePercentOfChart(chartData: CandleStickDataType[]){
+function getOnePercentOfChart(chartData: CandleStickDataType[]) {
   let maxHigh = Number(chartData[0][2]);
   let minLow = Number(chartData[0][3]);
-  for(let i = 0; i < chartData.length; i++){
-    if(Number(chartData[i][2]) > maxHigh){
+  for (let i = 0; i < chartData.length; i++) {
+    if (Number(chartData[i][2]) > maxHigh) {
       maxHigh = Number(chartData[i][2]);
     }
-    if(Number(chartData[i][3]) < minLow){
-      minLow = Number(chartData[i][3])
+    if (Number(chartData[i][3]) < minLow) {
+      minLow = Number(chartData[i][3]);
     }
   }
   const onePercent = (maxHigh - minLow) / 100;
-  return onePercent
+  return onePercent;
+}
+
+function postImageInChannel(imgUrl, coinName) {
+  fetch(
+    `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=${imgUrl}&caption=${coinName}`,
+  ).catch((e) => console.error("error posting image in channel", e));
 }
 
 main();
