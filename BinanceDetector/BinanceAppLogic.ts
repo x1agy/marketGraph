@@ -1,5 +1,9 @@
 import { getSymbols, checkMarket, getCandleStickData } from "./BinanceApp";
-import { SymbolType, SymbolDataType, CandleStickDataType } from "./Types/DataTypesForLogic";
+import {
+  SymbolType,
+  SymbolDataType,
+  CandleStickDataType,
+} from "./Types/DataTypesForLogic";
 
 const MarketData: SymbolDataType[] = [];
 const coinsThatHaveChart: {
@@ -7,10 +11,10 @@ const coinsThatHaveChart: {
   chartId: string;
   createdTime: number;
 }[] = [];
-const intervalTime = 30000;
+const intervalTime = 20000;
 // const hourInUNIXtimestamp = 60000 * 60;
 // const percent = 0.05;
-const hourInUNIXtimestamp = 1000 * 60;
+const hourInUNIXtimestamp = 200 * 60;
 const percent = 0.00001;
 
 let count = 0;
@@ -30,7 +34,9 @@ async function main() {
 
 function addNewDataToMarketData(newData) {
   newData.map((coinData) => {
-    const coinIndex = MarketData.findIndex((item) => item.symbol === coinData.symbol);
+    const coinIndex = MarketData.findIndex(
+      (item) => item.symbol === coinData.symbol
+    );
     if (coinIndex !== -1) {
       MarketData[coinIndex].prices.push({
         price: coinData.price,
@@ -50,7 +56,11 @@ function addNewDataToMarketData(newData) {
   });
 }
 
-async function requestToCreateChart(candleStickData: CandleStickDataType[], coinName: SymbolType) {
+async function requestToCreateChart(
+  candleStickData: CandleStickDataType[],
+  coinName: SymbolType
+) {
+  console.log(candleStickData);
   const chartGeneratorUrl = "http://localhost:5000/createChart";
   fetch(chartGeneratorUrl, {
     method: "POST",
@@ -66,7 +76,14 @@ async function requestToCreateChart(candleStickData: CandleStickDataType[], coin
     .then((response) => response.json())
     .then((data) => {
       console.log(data);
-      postImageInChannel(data.imageURL, coinName.slice(0, -3));
+      //specific for binance
+      postImageInChannel(
+        data.imageURL,
+        coinName.slice(0, -3),
+        (Number(candleStickData[candleStickData.length - 1][2]) -
+          Number(candleStickData[0][2])) /
+          Number(candleStickData[0][2])
+      );
       coinsThatHaveChart.push({
         coinName: coinName,
         chartId: data.imageId,
@@ -80,13 +97,21 @@ function checkCoinsCurrencyChange() {
   MarketData.map(async (coin) => {
     const coinPricesArrayLastElementIndex = coin.prices.length - 1;
     //проверка есть ли уже цены часовой давности
-    if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
+    if (
+      coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time >
+      hourInUNIXtimestamp
+    ) {
       // проверка есть ли уже график у монеты
-      if (coinsThatHaveChart.findIndex((chart) => chart.coinName === coin.symbol) === -1) {
+      if (
+        coinsThatHaveChart.findIndex(
+          (chart) => chart.coinName === coin.symbol
+        ) === -1
+      ) {
         const hourAgoPrice = coin.prices[0].price;
         const modernPrice = coin.prices[coin.prices.length - 1].price;
         if ((modernPrice - hourAgoPrice) / hourAgoPrice > percent) {
-          const candleStickData: CandleStickDataType[] = await getCandleStickData(coin.symbol);
+          const candleStickData: CandleStickDataType[] =
+            await getCandleStickData(coin.symbol);
           // check is coin open price and close price are the same
           const onePercentOfChartSize = getOnePercentOfChart(candleStickData);
           candleStickData.forEach((item) => {
@@ -95,7 +120,10 @@ function checkCoinsCurrencyChange() {
             }
           });
 
-          const response = await requestToCreateChart(candleStickData, coin.symbol);
+          const response = await requestToCreateChart(
+            candleStickData,
+            coin.symbol
+          );
         }
       }
     }
@@ -105,7 +133,10 @@ function checkCoinsCurrencyChange() {
 function clearExpiredPrices() {
   MarketData.forEach((coin) => {
     const coinPricesArrayLastElementIndex = coin.prices.length - 1;
-    if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
+    if (
+      coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time >
+      hourInUNIXtimestamp
+    ) {
       coin.prices.shift();
       console.log(coin.prices.shift());
     }
@@ -127,9 +158,31 @@ function getOnePercentOfChart(chartData: CandleStickDataType[]) {
   return onePercent;
 }
 
-function postImageInChannel(imgUrl, coinName) {
+function postImageInChannel(imgUrl, coinName, change) {
+  // fetch(
+  //   encodeURI(
+  //     `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&parse_mode=MarkdownV2&photo=${imgUrl}&caption=${coinName}/BTC\\n24h: +${
+  //       change * 100
+  //     }%\\n
+  //     [inline URL](http://www.example.com/)`
+  //   )
+  // ).catch((e) => console.error("error posting image in channel", e));
+
+  // fetch(
+  //   encodeURI(
+  //     `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&parse_mode=MarkdownV2&photo=${imgUrl}&caption=${coinName}/BTC\\n24h: +${
+  //       change * 100
+  //     }%\\n
+  //     [inline URL](http://www.example.com/)`
+  //   )
+  // ).catch((e) => console.error("error posting image in channel", e));
   fetch(
-    `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=${imgUrl}&caption=${coinName}`,
+    encodeURI(
+      `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=${imgUrl}&caption=${coinName}/BTC\\n24h: +${
+        change * 100
+      }%\\n 
+    [inline URL](http://www.example.com/)`
+    )
   ).catch((e) => console.error("error posting image in channel", e));
 }
 

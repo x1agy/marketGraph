@@ -39,10 +39,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var BinanceApp_1 = require("./BinanceApp");
 var MarketData = [];
 var coinsThatHaveChart = [];
-var intervalTime = 30000;
+var intervalTime = 20000;
 // const hourInUNIXtimestamp = 60000 * 60;
 // const percent = 0.05;
-var hourInUNIXtimestamp = 1000 * 60;
+var hourInUNIXtimestamp = 200 * 60;
 var percent = 0.00001;
 var count = 0;
 function main() {
@@ -103,9 +103,8 @@ function requestToCreateChart(candleStickData, coinName) {
     return __awaiter(this, void 0, void 0, function () {
         var chartGeneratorUrl;
         return __generator(this, function (_a) {
-            console.log("createChart");
+            console.log(candleStickData);
             chartGeneratorUrl = "http://localhost:5000/createChart";
-            console.log(coinName);
             fetch(chartGeneratorUrl, {
                 method: "POST",
                 headers: {
@@ -120,7 +119,10 @@ function requestToCreateChart(candleStickData, coinName) {
                 .then(function (response) { return response.json(); })
                 .then(function (data) {
                 console.log(data);
-                postImageInChannel(data.imageUrl, "gr");
+                //specific for binance
+                postImageInChannel(data.imageURL, coinName.slice(0, -3), (Number(candleStickData[candleStickData.length - 1][2]) -
+                    Number(candleStickData[0][2])) /
+                    Number(candleStickData[0][2]));
                 coinsThatHaveChart.push({
                     coinName: coinName,
                     chartId: data.imageId,
@@ -140,7 +142,8 @@ function checkCoinsCurrencyChange() {
             switch (_a.label) {
                 case 0:
                     coinPricesArrayLastElementIndex = coin.prices.length - 1;
-                    if (!(coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp)) return [3 /*break*/, 3];
+                    if (!(coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time >
+                        hourInUNIXtimestamp)) return [3 /*break*/, 3];
                     if (!(coinsThatHaveChart.findIndex(function (chart) { return chart.coinName === coin.symbol; }) === -1)) return [3 /*break*/, 3];
                     hourAgoPrice = coin.prices[0].price;
                     modernPrice = coin.prices[coin.prices.length - 1].price;
@@ -166,7 +169,8 @@ function checkCoinsCurrencyChange() {
 function clearExpiredPrices() {
     MarketData.forEach(function (coin) {
         var coinPricesArrayLastElementIndex = coin.prices.length - 1;
-        if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time > hourInUNIXtimestamp) {
+        if (coin.prices[coinPricesArrayLastElementIndex].time - coin.prices[0].time >
+            hourInUNIXtimestamp) {
             coin.prices.shift();
             console.log(coin.prices.shift());
         }
@@ -186,7 +190,23 @@ function getOnePercentOfChart(chartData) {
     var onePercent = (maxHigh - minLow) / 100;
     return onePercent;
 }
-function postImageInChannel(imgUrl, coinName) {
-    fetch("https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=".concat(imgUrl, "&caption=").concat(coinName)).catch(function (e) { return console.error("error posting image in channel", e); });
+function postImageInChannel(imgUrl, coinName, change) {
+    // fetch(
+    //   encodeURI(
+    //     `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&parse_mode=MarkdownV2&photo=${imgUrl}&caption=${coinName}/BTC\\n24h: +${
+    //       change * 100
+    //     }%\\n
+    //     [inline URL](http://www.example.com/)`
+    //   )
+    // ).catch((e) => console.error("error posting image in channel", e));
+    // fetch(
+    //   encodeURI(
+    //     `https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&parse_mode=MarkdownV2&photo=${imgUrl}&caption=${coinName}/BTC\\n24h: +${
+    //       change * 100
+    //     }%\\n
+    //     [inline URL](http://www.example.com/)`
+    //   )
+    // ).catch((e) => console.error("error posting image in channel", e));
+    fetch(encodeURI("https://api.telegram.org/bot6749257932:AAGR51Jcg0JNnrKWWd0RuEQI359uHtTlSy0/sendPhoto?chat_id=-1002068113504&photo=".concat(imgUrl, "&caption=").concat(coinName, "/BTC\\n24h: +").concat(change * 100, "%\\n \n    [inline URL](http://www.example.com/)"))).catch(function (e) { return console.error("error posting image in channel", e); });
 }
 main();
